@@ -7,6 +7,8 @@ import java.util.ArrayList;
 
 public interface Parseable {
 
+    String prefix(Object... objects);
+
     String parse();
 
     List<String> parseList();

@@ -12,6 +12,4 @@ public @interface Command {
     String arguments() default "";
 
     String[] aliases() default {};
-
-    boolean debug() default false;
 }

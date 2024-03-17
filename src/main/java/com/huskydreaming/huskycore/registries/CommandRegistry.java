@@ -1,48 +1,36 @@
 package com.huskydreaming.huskycore.registries;
 
 import com.huskydreaming.huskycore.HuskyPlugin;
-import com.huskydreaming.huskycore.commands.CommandExecutor;
+import com.huskydreaming.huskycore.commands.AbstractCommand;
 import com.huskydreaming.huskycore.commands.SubCommand;
 import com.huskydreaming.huskycore.interfaces.Registry;
-import org.bukkit.Bukkit;
-import org.bukkit.Server;
-import org.bukkit.command.CommandMap;
+import org.bukkit.command.PluginCommand;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Stream;
 
 public class CommandRegistry implements Registry {
 
-    private CommandExecutor commandExecutor;
+    private AbstractCommand abstractCommand;
     private final Set<SubCommand> subCommands = new HashSet<>();
 
     @Override
     public void deserialize(HuskyPlugin plugin) {
-        try {
-            Server server = Bukkit.getServer();
-            Field field = server.getClass().getDeclaredField("commandMap");
-            field.setAccessible(true);
-
-            CommandMap commandMap = (CommandMap) field.get(server);
-            commandMap.register(commandExecutor.getName(), commandExecutor);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        PluginCommand pluginCommand = plugin.getCommand(abstractCommand.getName());
+        if(pluginCommand != null) pluginCommand.setExecutor(abstractCommand);
     }
 
-    public void setCommandExecutor(CommandExecutor commandExecutor) {
-        this.commandExecutor = commandExecutor;
+    public void setCommandExecutor(AbstractCommand abstractCommand) {
+        this.abstractCommand = abstractCommand;
     }
 
-    public CommandExecutor getCommandExecutor() {
-        return commandExecutor;
+    public AbstractCommand getAbstractCommand() {
+        return abstractCommand;
     }
 
     public SubCommand getSubCommand(String string) {
         return subCommands.stream().filter(s ->
-                Stream.of(s.getAliases()).map(String::toLowerCase).toList().contains(string) &&
+                Stream.of(s.getAliases()).map(String::toLowerCase).toList().contains(string) ||
                         s.getLabel().equalsIgnoreCase(string))
                 .findFirst()
                 .orElse(null);
