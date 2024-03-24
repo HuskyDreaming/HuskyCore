@@ -2,6 +2,8 @@ package com.huskydreaming.huskycore;
 
 import com.huskydreaming.huskycore.registries.CommandRegistry;
 import com.huskydreaming.huskycore.registries.ServiceRegistry;
+import com.huskydreaming.huskycore.services.DefaultService;
+import com.huskydreaming.huskycore.services.DefaultServiceImpl;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,6 +19,8 @@ public abstract class HuskyPlugin extends JavaPlugin {
     public void onEnable() {
         commandRegistry = new CommandRegistry();
         serviceRegistry = new ServiceRegistry();
+        serviceRegistry.register(DefaultService.class, new DefaultServiceImpl());
+        serviceRegistry.deserialize(this);
     }
 
     protected void registerListeners(Listener... listeners) {

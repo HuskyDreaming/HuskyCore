@@ -72,7 +72,6 @@ public class ItemBuilder {
             if (enchanted) skullMeta.addEnchant(Enchantment.DURABILITY, 1, true);
             skullMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
             skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            skullMeta.addItemFlags(ItemFlag.HIDE_ARMOR_TRIM);
             skullMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
             skullMeta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
             skullMeta.addItemFlags(ItemFlag.HIDE_DYE);
@@ -93,7 +92,6 @@ public class ItemBuilder {
             if (enchanted) itemMeta.addEnchant(Enchantment.DURABILITY, 1, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            itemMeta.addItemFlags(ItemFlag.HIDE_ARMOR_TRIM);
             itemMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
             itemMeta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
             itemMeta.addItemFlags(ItemFlag.HIDE_DYE);

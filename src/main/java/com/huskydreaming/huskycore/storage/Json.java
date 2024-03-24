@@ -2,8 +2,13 @@ package com.huskydreaming.huskycore.storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
+import com.huskydreaming.huskycore.data.ChunkData;
 import com.huskydreaming.huskycore.enumeration.Extension;
+import com.huskydreaming.huskycore.serializers.ChunkSerializer;
+import com.huskydreaming.huskycore.serializers.LocationSerializer;
+import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 
 import java.io.BufferedReader;
@@ -19,55 +24,48 @@ import java.nio.file.Paths;
 public class Json {
 
     private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(Location.class, new LocationSerializer())
+            .registerTypeAdapter(ChunkData.class, new ChunkSerializer())
             .setPrettyPrinting()
             .create();
 
     public static void write(Plugin plugin, String fileName, Object object) {
-        Path path = check(plugin, fileName);
-
+        Path path = create(plugin, fileName, Extension.JSON);
         try (BufferedWriter bufferedWriter = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
             GSON.toJson(object, bufferedWriter);
-            plugin.getLogger().info("Serialized " + path.getFileName() + " successfully.");
         } catch (IOException e) {
             plugin.getLogger().severe(e.getMessage());
         }
     }
 
     public static <T> T read(Plugin plugin, String fileName, Type type) {
-        Path path = check(plugin, fileName);
+        Path path = create(plugin, fileName, Extension.JSON);
+        BufferedReader bufferedReader;
         try {
-            BufferedReader bufferedReader = Files.newBufferedReader(check(plugin, fileName), StandardCharsets.UTF_8);
-            JsonReader jsonReader = new JsonReader(bufferedReader);
-            T t = GSON.fromJson(jsonReader, type);
-            plugin.getLogger().info("Deserialized " + path.getFileName() + " successfully.");
-            return t;
+            bufferedReader = Files.newBufferedReader(path, StandardCharsets.UTF_8);
         } catch (IOException e) {
+            return null;
+        }
+
+        JsonReader jsonReader = new JsonReader(bufferedReader);
+        try {
+            return GSON.fromJson(jsonReader, type);
+        } catch (JsonSyntaxException e) {
             return null;
         }
     }
 
-    public static Path check(Plugin plugin, String fileName) {
-        String[] splitPath = fileName.split("/");
-        String directoryPath = null;
-
-        if (splitPath.length > 1) {
-            directoryPath = splitPath[0] + File.separator;
-        }
-
-        String dataFolder = plugin.getDataFolder() + File.separator;
-        Path path = Paths.get(dataFolder + fileName + Extension.JSON);
+    public static Path create(Plugin plugin, String fileName, Extension extension) {
+        Path path = Paths.get(plugin.getDataFolder() + File.separator + fileName + extension.toString());
+        Path parentPath = path.getParent();
         try {
-            if (!Files.exists(plugin.getDataFolder().toPath())) {
-                Files.createDirectories(plugin.getDataFolder().toPath());
-                plugin.getLogger().info("Creating new directory: " + plugin.getDataFolder());
+            if (!Files.exists(parentPath)) {
+                Files.createDirectories(parentPath);
+                plugin.getLogger().info("Created new directory: " + parentPath.getFileName());
             }
-
             if (!Files.exists(path)) {
-                if(directoryPath != null) {
-                    Files.createDirectories(Paths.get(dataFolder  + directoryPath));
-                }
                 Files.createFile(path);
-                plugin.getLogger().info("Creating new file: " + path.getFileName());
+                plugin.getLogger().info("Created new file: " + path.getFileName());
             }
         } catch (IOException e) {
             plugin.getLogger().severe(e.getMessage());
