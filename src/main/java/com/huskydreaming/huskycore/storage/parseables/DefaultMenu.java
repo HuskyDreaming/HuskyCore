@@ -7,28 +7,32 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public enum DefaultMenu implements Parseable {
 
     // General Menu Items
-    DESCRIPTION("&f{0}"),
+    DESCRIPTION("&7{0}"),
     BACK_TITLE("&fBack"),
-    BACK_LORE(Collections.singletonList("&7Click to go back.")),
+    BACK_LORE(List.of("&7Click to go back.")),
+
+    FILTER_TITLE("&7Filter: {0}{1}"),
+    FILTER_LORE(List.of("", "&fClick to filter")),
     PREVIOUS_TITLE("&fPrevious"),
-    PREVIOUS_LORE(Collections.singletonList("&7Click for previous page.")),
+    PREVIOUS_LORE(List.of("&7Click for previous page.")),
     NEXT_TITLE("&fNext"),
-    NEXT_LORE(Collections.singletonList("&7Click for next page.")),
-    ENABLE_TITLE("&a{0}"),
-    ENABLED_DESCRIPTION("&7Click to disable."),
+    NEXT_LORE(List.of("&7Click for next page.")),
+    ENABLE_TITLE("&a{0} ✔"),
+    ENABLED_DESCRIPTION(List.of("&7{0}")),
+    ENABLED_DESCRIPTION_EDITABLE(List.of("&7{0}", "", "&fClick to disable.")),
     ENABLE_MATERIAL("LIME_DYE"),
-    DISABLED_TITLE("&c{0}"),
-    DISABLED_DESCRIPTION("&7Click to enable."),
+    DISABLED_TITLE("&c{0} ✘"),
+    DISABLED_DESCRIPTION(List.of("&7{0}")),
+    DISABLED_DESCRIPTION_EDITABLE(List.of("&7{0}", "", "&fClick to enable.")),
     DISABLED_MATERIAL("GRAY_DYE"),
     NO_PERMISSIONS_TITLE("&c{0}"),
-    NO_PERMISSIONS_LORE(Collections.singletonList("&7No permissions."));
+    NO_PERMISSIONS_LORE(List.of("&7No permissions."));
 
     private final String def;
     private final List<String> list;

@@ -1,6 +1,7 @@
-package com.huskydreaming.huskycore.services;
+package com.huskydreaming.huskycore.implementations;
 
 import com.huskydreaming.huskycore.HuskyPlugin;
+import com.huskydreaming.huskycore.interfaces.DefaultService;
 import com.huskydreaming.huskycore.storage.parseables.DefaultMenu;
 import com.huskydreaming.huskycore.storage.Yaml;
 

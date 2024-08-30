@@ -11,11 +11,18 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.List;
 
-// Needs to be improved
+// TODO: Needs to be improved
 public class Util {
 
     private static final Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
     private static final String regex = "\\s+";
+
+    public static final BlockFace[] chunkSteps = new BlockFace[]{
+            BlockFace.NORTH,
+            BlockFace.EAST,
+            BlockFace.SOUTH,
+            BlockFace.WEST
+    };
 
     public static boolean isNumeric(String string) {
         return pattern.matcher(string).matches();
@@ -43,14 +50,7 @@ public class Util {
         World world = a.getWorld();
         if (!world.equals(b.getWorld())) return false;
 
-        BlockFace[] steps = new BlockFace[]{
-                BlockFace.NORTH,
-                BlockFace.EAST,
-                BlockFace.SOUTH,
-                BlockFace.WEST
-        };
-
-        for (BlockFace step : steps) {
+        for (BlockFace step : chunkSteps) {
             if (world.getChunkAt(a.getX() + step.getModX(), a.getZ() + step.getModZ()).equals(b)) {
                 return true;
             }

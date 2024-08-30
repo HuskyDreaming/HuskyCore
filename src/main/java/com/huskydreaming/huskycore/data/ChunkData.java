@@ -40,6 +40,10 @@ public class ChunkData {
         return z;
     }
 
+    public String getWorld() {
+        return world;
+    }
+
     public Chunk toChunk() {
         World world = Bukkit.getWorld(this.world);
         if(world == null) return null;
