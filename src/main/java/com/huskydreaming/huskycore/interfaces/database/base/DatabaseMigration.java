@@ -1,4 +1,4 @@
-package com.huskydreaming.huskycore.interfaces.database;
+package com.huskydreaming.huskycore.interfaces.database.base;
 
 import java.sql.Connection;
 

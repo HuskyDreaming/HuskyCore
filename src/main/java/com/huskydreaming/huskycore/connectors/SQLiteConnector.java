@@ -1,9 +1,9 @@
 package com.huskydreaming.huskycore.connectors;
 
 import com.huskydreaming.huskycore.HuskyPlugin;
-import com.huskydreaming.huskycore.interfaces.database.DatabaseConnector;
+import com.huskydreaming.huskycore.data.DatabaseConfig;
 import com.huskydreaming.huskycore.enumeration.DatabaseType;
-import org.bukkit.plugin.PluginDescriptionFile;
+import com.huskydreaming.huskycore.interfaces.database.base.DatabaseConnector;
 
 import java.io.File;
 import java.sql.Connection;
@@ -15,13 +15,12 @@ public class SQLiteConnector implements DatabaseConnector {
     private final HuskyPlugin plugin;
     private final String string;
     private Connection connection;
+    private final DatabaseConfig databaseConfig;
 
-    public SQLiteConnector(HuskyPlugin plugin) {
-        PluginDescriptionFile pluginDescriptionFile = plugin.getDescription();
-        String pluginName = pluginDescriptionFile.getName();
-
+    public SQLiteConnector(HuskyPlugin plugin, DatabaseConfig databaseConfig) {
         this.plugin = plugin;
-        this.string = "jdbc:sqlite:" + plugin.getDataFolder() + File.separator + pluginName.toLowerCase() + ".db";
+        this.databaseConfig = databaseConfig;
+        this.string = "jdbc:sqlite:" + plugin.getDataFolder() + File.separator + databaseConfig.database() + ".db";
     }
 
     @Override
@@ -29,7 +28,7 @@ public class SQLiteConnector implements DatabaseConnector {
         try {
             callback.accept(getConnection());
         } catch (Exception ex) {
-            this.plugin.getLogger().severe("An error occurred executing an SQLite query: " + ex.getMessage());
+            this.plugin.getLogger().severe("[Database] An error occurred executing an SQLite query: " + ex.getMessage());
         }
     }
 
@@ -39,7 +38,7 @@ public class SQLiteConnector implements DatabaseConnector {
             try {
                 connection.close();
             } catch (SQLException e) {
-                plugin.getLogger().severe("An error occurred while closing the SQLite database connection: " + e.getMessage());
+                plugin.getLogger().severe("[Database] An error occurred while closing the SQLite database connection: " + e.getMessage());
             }
         }
     }
@@ -49,10 +48,9 @@ public class SQLiteConnector implements DatabaseConnector {
         try {
             if (connection == null || connection.isClosed()) {
                 connection = DriverManager.getConnection(string);
-                plugin.getLogger().info("Connection to SQLite database established");
             }
         } catch (SQLException e) {
-            this.plugin.getLogger().severe("An error occurred retrieving the SQLite database connection: " + e.getMessage());
+            this.plugin.getLogger().severe("[Database] An error occurred retrieving the SQLite database connection: " + e.getMessage());
         }
         return connection;
     }
@@ -60,5 +58,10 @@ public class SQLiteConnector implements DatabaseConnector {
     @Override
     public DatabaseType getType() {
         return DatabaseType.SQLITE;
+    }
+
+    @Override
+    public DatabaseConfig getConfig() {
+        return databaseConfig;
     }
 }

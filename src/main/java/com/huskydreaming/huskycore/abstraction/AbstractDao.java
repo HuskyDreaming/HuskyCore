@@ -1,41 +1,44 @@
 package com.huskydreaming.huskycore.abstraction;
 
 import com.huskydreaming.huskycore.HuskyPlugin;
-import com.huskydreaming.huskycore.enumeration.SqlOption;
-import com.huskydreaming.huskycore.interfaces.database.Dao;
-import com.huskydreaming.huskycore.interfaces.database.DatabaseConnector;
+import com.huskydreaming.huskycore.interfaces.database.base.Dao;
+import com.huskydreaming.huskycore.interfaces.database.base.DatabaseService;
 import com.huskydreaming.huskycore.interfaces.database.sql.SqlEntity;
 import com.huskydreaming.huskycore.interfaces.database.sql.SqlEntityType;
 import com.huskydreaming.huskycore.utilities.AsyncAction;
 import com.huskydreaming.huskycore.utilities.Query;
 import org.bukkit.Bukkit;
 
-import java.io.Serializable;
 import java.sql.*;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-public abstract class AbstractDao<E extends SqlEntity & Serializable> implements Dao<E> {
+public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
 
-    private final HuskyPlugin plugin;
-    private final DatabaseConnector databaseConnector;
+    protected final HuskyPlugin plugin;
+    protected final DatabaseService databaseService;
+    protected final String pluginName;
 
     public AbstractDao(HuskyPlugin plugin) {
         this.plugin = plugin;
-        this.databaseConnector = plugin.getDatabaseConnector();
+        this.pluginName = plugin.getDescription().getName().toLowerCase();
+        this.databaseService = plugin.provide(DatabaseService.class);
     }
 
-    public abstract int setStatement(PreparedStatement statement, E e) throws SQLException;
+    public abstract int setStatement(PreparedStatement statement, E entity) throws SQLException;
 
-    public abstract  E fromResult(ResultSet result) throws SQLException;
+    public abstract E fromResult(ResultSet result) throws SQLException;
 
     @Override
-    public AsyncAction<Integer> insert(E entry) {
+    public AsyncAction<Integer> insert(E entity) {
+        plugin.getLogger().info(Query.insert(entity.getEntityType(), pluginName));
         return AsyncAction.supplyAsync(plugin, () -> {
-            try (Connection connection = databaseConnector.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.insert(entry.getEntityType()))) {
-                    setStatement(statement, entry);
+            try (Connection connection = databaseService.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(Query.insert(entity.getEntityType(), pluginName))) {
+                    setStatement(statement, entity);
                     statement.executeUpdate();
                     if (statement.executeUpdate() > 0) {
                         ResultSet result = statement.getGeneratedKeys();
@@ -50,12 +53,13 @@ public abstract class AbstractDao<E extends SqlEntity & Serializable> implements
     }
 
     @Override
-    public AsyncAction<Integer> update(E entry) {
+    public AsyncAction<Integer> update(E entity) {
+        plugin.getLogger().info(Query.update(entity.getEntityType(), pluginName));
         return AsyncAction.supplyAsync(plugin, () -> {
-            try (Connection connection = databaseConnector.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.update(entry.getEntityType()))) {
-                    int index = setStatement(statement, entry);
-                    statement.setInt(index, entry.getId());
+            try (Connection connection = databaseService.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(Query.update(entity.getEntityType(), pluginName))) {
+                    int id = setStatement(statement, entity);
+                    statement.setInt(id, entity.getId());
                     statement.executeUpdate();
                     if (statement.executeUpdate() > 0) {
                         ResultSet result = statement.getGeneratedKeys();
@@ -70,11 +74,12 @@ public abstract class AbstractDao<E extends SqlEntity & Serializable> implements
     }
 
     @Override
-    public AsyncAction<Integer> delete(E entry) {
+    public AsyncAction<Integer> delete(E entity) {
+        plugin.getLogger().info(Query.update(entity.getEntityType(), pluginName));
         return AsyncAction.supplyAsync(plugin, () -> {
-            try (Connection connection = databaseConnector.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.delete(entry.getEntityType()))) {
-                    statement.setInt(1, entry.getId());
+            try (Connection connection = databaseService.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(Query.delete(entity.getEntityType(), pluginName))) {
+                    statement.setInt(1, entity.getId());
                     statement.executeUpdate();
                     if (statement.executeUpdate() > 0) {
                         ResultSet result = statement.getGeneratedKeys();
@@ -89,13 +94,13 @@ public abstract class AbstractDao<E extends SqlEntity & Serializable> implements
     }
 
     @Override
-    public void bulkUpdate(SqlEntityType type, Set<E> set) {
+    public void bulkUpdate(SqlEntityType type, Collection<E> collection) {
         plugin.runAndWait(() -> {
-            try (Connection connection = databaseConnector.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.update(type))) {
-                    for (var entry : set) {
-                        int index = setStatement(statement, entry);
-                        statement.setInt(index, entry.getId());
+            try (Connection connection = databaseService.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(Query.update(type, pluginName))) {
+                    for (var value : collection) {
+                        int id = setStatement(statement, value);
+                        statement.setInt(id, value.getId());
                         statement.addBatch();
                     }
                     statement.executeBatch();
@@ -107,15 +112,18 @@ public abstract class AbstractDao<E extends SqlEntity & Serializable> implements
     }
 
     @Override
-    public void bulkImport(SqlEntityType type, Consumer<Set<E>> callback) {
+    public void bulkImport(SqlEntityType type, Consumer<Map<Integer, E>> callback) {
         plugin.runAsync(() -> {
-            Set<E> entries = new HashSet<>();
-            try (Connection connection = databaseConnector.getConnection()) {
-                var query = Query.select(type, SqlOption.EMPTY);
+            Map<Integer, E> map = new ConcurrentHashMap<>();
+            try (Connection connection = databaseService.getConnection()) {
+                var query = Query.selectEmpty(type, pluginName);
                 try (Statement statement = connection.createStatement()) {
                     ResultSet result = statement.executeQuery(query);
-                    while (result.next()) entries.add(fromResult(result));
-                    Bukkit.getScheduler().runTask(this.plugin, () -> callback.accept(entries));
+                    while (result.next()) {
+                        E element = fromResult(result);
+                        map.put(element.getId(), element);
+                    }
+                    Bukkit.getScheduler().runTask(this.plugin, () -> callback.accept(map));
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -124,12 +132,12 @@ public abstract class AbstractDao<E extends SqlEntity & Serializable> implements
     }
 
     @Override
-    public void bulkDelete(SqlEntityType type, Set<E> set) {
+    public void bulkDelete(SqlEntityType type, Set<Integer> collection) {
         plugin.runAndWait(() -> {
-            try (Connection connection = databaseConnector.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.delete(type))) {
-                    for (var entry : set) {
-                        statement.setInt(1, entry.getId());
+            try (Connection connection = databaseService.getConnection()) {
+                try (PreparedStatement statement = connection.prepareStatement(Query.delete(type, pluginName))) {
+                    for (var value : collection) {
+                        statement.setInt(1, value);
                         statement.addBatch();
                     }
                     statement.executeBatch();

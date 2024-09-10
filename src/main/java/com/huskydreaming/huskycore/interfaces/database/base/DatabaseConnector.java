@@ -1,5 +1,6 @@
-package com.huskydreaming.huskycore.interfaces.database;
+package com.huskydreaming.huskycore.interfaces.database.base;
 
+import com.huskydreaming.huskycore.data.DatabaseConfig;
 import com.huskydreaming.huskycore.enumeration.DatabaseType;
 
 import java.sql.Connection;
@@ -16,5 +17,6 @@ public interface DatabaseConnector {
         void accept(Connection connection) throws SQLException;
     }
 
+    DatabaseConfig getConfig();
     DatabaseType getType();
 }

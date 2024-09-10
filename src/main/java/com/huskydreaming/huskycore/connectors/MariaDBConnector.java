@@ -2,7 +2,7 @@ package com.huskydreaming.huskycore.connectors;
 
 import com.huskydreaming.huskycore.HuskyPlugin;
 import com.huskydreaming.huskycore.data.DatabaseConfig;
-import com.huskydreaming.huskycore.interfaces.database.DatabaseConnector;
+import com.huskydreaming.huskycore.interfaces.database.base.DatabaseConnector;
 import com.huskydreaming.huskycore.enumeration.DatabaseType;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,9 +14,11 @@ public class MariaDBConnector implements DatabaseConnector {
 
     private final HuskyPlugin plugin;
     private final HikariDataSource hikariDataSource;
+    private final DatabaseConfig databaseConfig;
 
     public MariaDBConnector(HuskyPlugin plugin, DatabaseConfig databaseConfig) {
         this.plugin = plugin;
+        this.databaseConfig = databaseConfig;
 
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl("jdbc:mariadb://" + databaseConfig.hostname() + ":" + databaseConfig.port() + "/" + databaseConfig.database() + "?useSSL=" + databaseConfig.ssl());
@@ -32,7 +34,7 @@ public class MariaDBConnector implements DatabaseConnector {
         try (Connection connection = hikariDataSource.getConnection()) {
             callback.accept(connection);
         } catch (SQLException e) {
-            this.plugin.getLogger().severe("An error occurred executing MariaDB query: " + e.getMessage());
+            this.plugin.getLogger().severe("[Database] An error occurred executing MariaDB query: " + e.getMessage());
         }
     }
 
@@ -46,9 +48,14 @@ public class MariaDBConnector implements DatabaseConnector {
         try {
             return hikariDataSource.getConnection();
         } catch (SQLException e) {
-            plugin.getLogger().severe("An error occurred retrieving the MariaDB database connection: " + e.getMessage());
+            plugin.getLogger().severe("[Database] An error occurred retrieving the MariaDB database connection: " + e.getMessage());
             return null;
         }
+    }
+
+    @Override
+    public DatabaseConfig getConfig() {
+        return databaseConfig;
     }
 
     @Override

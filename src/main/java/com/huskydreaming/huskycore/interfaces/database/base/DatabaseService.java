@@ -1,4 +1,4 @@
-package com.huskydreaming.huskycore.interfaces.database;
+package com.huskydreaming.huskycore.interfaces.database.base;
 
 import com.huskydreaming.huskycore.interfaces.Service;
 
@@ -8,6 +8,8 @@ import java.util.concurrent.CompletableFuture;
 public interface DatabaseService extends Service {
 
     Connection getConnection();
+
+    DatabaseConnector getDatabaseConnector();
 
     CompletableFuture<Void> asyncFuture(Runnable runnable);
 

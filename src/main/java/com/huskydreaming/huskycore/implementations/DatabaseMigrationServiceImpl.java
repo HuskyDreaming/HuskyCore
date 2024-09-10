@@ -2,9 +2,9 @@ package com.huskydreaming.huskycore.implementations;
 
 import com.huskydreaming.huskycore.HuskyPlugin;
 import com.huskydreaming.huskycore.enumeration.DatabaseType;
-import com.huskydreaming.huskycore.interfaces.database.DatabaseConnector;
-import com.huskydreaming.huskycore.interfaces.database.DatabaseMigration;
-import com.huskydreaming.huskycore.interfaces.database.DatabaseMigrationService;
+import com.huskydreaming.huskycore.interfaces.database.base.DatabaseConnector;
+import com.huskydreaming.huskycore.interfaces.database.base.DatabaseMigration;
+import com.huskydreaming.huskycore.interfaces.database.base.DatabaseMigrationService;
 import org.bukkit.plugin.PluginDescriptionFile;
 
 import java.sql.Connection;
@@ -33,53 +33,62 @@ public class DatabaseMigrationServiceImpl implements DatabaseMigrationService {
     @Override
     public void deserialize(HuskyPlugin plugin) {
         try (Connection connection = connector.getConnection()) {
-            PluginDescriptionFile pluginDescriptionFile = plugin.getDescription();
-            String tableName = pluginDescriptionFile.getName().toLowerCase() + "_migrations";
+            PluginDescriptionFile descriptionFile = plugin.getDescription();
+            String pluginName = descriptionFile.getName().toLowerCase();
 
-            int currentMigrationVersion = -1;
-            if (hasMigration(connection, tableName)) {
-                currentMigrationVersion = retrieveMigrationVersion(connection, tableName);
+            int currentMigrationVersion = 0;
+            if (hasMigration(connection, pluginName)) {
+                currentMigrationVersion = retrieveMigrationVersion(connection, pluginName);
             } else {
-                createMigrationTable(connection, tableName);
+                createMigrationTable(connection, pluginName);
             }
 
             List<DatabaseMigration> availableMigrations = retrieveMigrations(currentMigrationVersion);
-            if (availableMigrations.isEmpty()) return;
+            if (availableMigrations.isEmpty()) {
+                plugin.getLogger().info("[Database] Currently on latest version v" + currentMigrationVersion);
+                return;
+            }
 
+            plugin.getLogger().info("[Database] Currently " + availableMigrations.size() + " version(s) behind");
             for (DatabaseMigration databaseMigration : availableMigrations) {
-                databaseMigration.migrate(connection, tableName);
+                databaseMigration.migrate(connection, pluginName);
+                plugin.getLogger().info("[Database] Migrating to version v" + databaseMigration.getVersion());
             }
 
             currentMigrationVersion = availableMigrations.stream()
                     .map(DatabaseMigration::getVersion)
                     .max(Integer::compareTo)
-                    .orElse(-1);
+                    .orElse(0);
 
-            updateMigration(connection, tableName, currentMigrationVersion);
+            updateMigration(connection, pluginName, currentMigrationVersion);
+            plugin.getLogger().info("[Database] Successfully updated to the latest version v" + currentMigrationVersion);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void updateMigration(Connection connection, String tableName, int currentMigration) throws SQLException {
-        String updateVersion = "UPDATE " + tableName + " SET migration_version = ?";
+    @Override
+    public void updateMigration(Connection connection, String pluginName, int currentMigration) throws SQLException {
+        String updateVersion = "UPDATE " + pluginName + "_migrations SET migration_version = ?";
         try (PreparedStatement statement = connection.prepareStatement(updateVersion)) {
             statement.setInt(1, currentMigration);
             statement.execute();
         }
     }
 
-    private List<DatabaseMigration> retrieveMigrations(int finalVersion) {
+    @Override
+    public List<DatabaseMigration> retrieveMigrations(int finalVersion) {
         return migrations.stream()
                 .filter(m -> m.getVersion() > finalVersion)
                 .sorted(Comparator.comparingInt(DatabaseMigration::getVersion))
                 .collect(Collectors.toList());
     }
 
-    private int retrieveMigrationVersion(Connection connection, String tableName) throws SQLException {
+    @Override
+    public int retrieveMigrationVersion(Connection connection, String pluginName) throws SQLException {
         int migrationVersion;
-        String selectVersion = "SELECT migration_version FROM " + tableName;
+        String selectVersion = "SELECT migration_version FROM " + pluginName + "_migrations";
         try (PreparedStatement statement = connection.prepareStatement(selectVersion)) {
             ResultSet result = statement.executeQuery();
             result.next();
@@ -88,27 +97,29 @@ public class DatabaseMigrationServiceImpl implements DatabaseMigrationService {
         return migrationVersion;
     }
 
-    private void createMigrationTable(Connection connection, String tableName) throws SQLException {
-        String createTable = "CREATE TABLE " + tableName + " (migration_version INT NOT NULL)";
+    @Override
+    public void createMigrationTable(Connection connection, String pluginName) throws SQLException {
+        String createTable = "CREATE TABLE IF NOT EXISTS " + pluginName + "_migrations (migration_version INT NOT NULL)";
         try (PreparedStatement statement = connection.prepareStatement(createTable)) {
             statement.execute();
         }
 
         // Insert primary row into migration table
-        String insertRow = "INSERT INTO " + tableName + " VALUES (?)";
+        String insertRow = "INSERT INTO " + pluginName + "_migrations VALUES (?)";
         try (PreparedStatement statement = connection.prepareStatement(insertRow)) {
             statement.setInt(1, -1);
             statement.execute();
         }
     }
 
-    private boolean hasMigration(Connection connection, String tableName) {
+    @Override
+    public boolean hasMigration(Connection connection, String pluginName) {
         String query = connector.getType() == DatabaseType.SQLITE ?
-                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?" :
-                "SHOW TABLES LIKE ?";
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?" : // SQLITE
+                "SHOW TABLES LIKE ?";                                             // MYSQL OR MARIADB
 
         try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, tableName);
+            statement.setString(1, pluginName + "_migrations");
             return statement.executeQuery().next();
         } catch (SQLException e) {
             return false;
