@@ -6,6 +6,7 @@ import com.huskydreaming.huskycore.interfaces.database.base.DatabaseConnector;
 import com.huskydreaming.huskycore.enumeration.DatabaseType;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,8 +14,9 @@ import java.sql.SQLException;
 public class MariaDBConnector implements DatabaseConnector {
 
     private final HuskyPlugin plugin;
-    private final HikariDataSource hikariDataSource;
     private final DatabaseConfig databaseConfig;
+
+    private HikariDataSource hikariDataSource;
 
     public MariaDBConnector(HuskyPlugin plugin, DatabaseConfig databaseConfig) {
         this.plugin = plugin;
@@ -26,7 +28,12 @@ public class MariaDBConnector implements DatabaseConnector {
         hikariConfig.setPassword(databaseConfig.password());
         hikariConfig.setMaximumPoolSize(databaseConfig.poolSize());
 
-        hikariDataSource = new HikariDataSource(hikariConfig);
+        try {
+            hikariDataSource = new HikariDataSource(hikariConfig);
+        } catch (HikariPool.PoolInitializationException e) {
+            this.plugin.getLogger().severe("[Database] An error occurred while connecting to pool: " + e.getMessage());
+            plugin.getPluginLoader().disablePlugin(plugin);
+        }
     }
 
     @Override

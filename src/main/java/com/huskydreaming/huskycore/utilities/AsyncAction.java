@@ -26,7 +26,7 @@ public class AsyncAction<T> {
     }
 
     private static Consumer<Throwable> getDefaultLogger(Plugin plugin) {
-        return e -> plugin.getLogger().log(Level.SEVERE, plugin.getName() + " generated an exception in a BukkitAsyncAction.", e);
+        return e -> plugin.getLogger().log(Level.SEVERE, "[Database] generated an exception in an AsyncAction.", e);
     }
 
     public static <T> AsyncAction<T> supplyAsync(Plugin plugin, Supplier<T> asyncSupplier) {
@@ -38,8 +38,7 @@ public class AsyncAction<T> {
     }
 
     public void queue() {
-        executeAsync(asyncSupplier, e -> {
-        });
+        executeAsync(asyncSupplier, e -> {});
     }
 
     public void queue(Consumer<T> syncedConsumer, Consumer<Throwable> syncedErrorHandler) {

@@ -62,7 +62,6 @@ public class DatabaseMigrationServiceImpl implements DatabaseMigrationService {
 
             updateMigration(connection, pluginName, currentMigrationVersion);
             plugin.getLogger().info("[Database] Successfully updated to the latest version v" + currentMigrationVersion);
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

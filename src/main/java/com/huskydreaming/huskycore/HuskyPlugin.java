@@ -25,7 +25,6 @@ public abstract class HuskyPlugin extends JavaPlugin {
         commandRegistry = new CommandRegistry();
         serviceRegistry = new ServiceRegistry();
         serviceRegistry.register(DefaultService.class, new DefaultServiceImpl());
-        serviceRegistry.deserialize(this);
     }
 
     protected void registerListeners(Listener... listeners) {

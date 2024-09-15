@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
@@ -33,63 +34,95 @@ public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
     public abstract E fromResult(ResultSet result) throws SQLException;
 
     @Override
-    public AsyncAction<Integer> insert(E entity) {
-        plugin.getLogger().info(Query.insert(entity.getEntityType(), pluginName));
+    public void insertStatement(E entity, Connection connection, Consumer<Long> consumer) {
+        String query = Query.insert(entity.getEntityType(), pluginName);
+        try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            setStatement(statement, entity);
+            int affectedRows = statement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("[Database] Inserting record for " + entity.getEntityType().toTable() + " table failed, no rows affected");
+            }
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    consumer.accept(generatedKeys.getLong(1));
+                } else {
+                    throw new SQLException("[Database] Creating user failed, no ID obtained.");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public AsyncAction<Long> insert(E entity) {
         return AsyncAction.supplyAsync(plugin, () -> {
             try (Connection connection = databaseService.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.insert(entity.getEntityType(), pluginName))) {
+                String query = Query.insert(entity.getEntityType(), pluginName);
+                try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                     setStatement(statement, entity);
-                    statement.executeUpdate();
-                    if (statement.executeUpdate() > 0) {
-                        ResultSet result = statement.getGeneratedKeys();
-                        if (result.next()) return result.getInt(1);
+                    int affectedRows = statement.executeUpdate();
+                    if (affectedRows == 0) {
+                        throw new SQLException("[Database] Inserting record for " + entity.getEntityType().toTable() + " table failed, no rows affected");
+                    }
+                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            return generatedKeys.getLong(1);
+                        } else {
+                            throw new SQLException("[Database] Creating user failed, no ID obtained.");
+                        }
                     }
                 }
             } catch (SQLException exception) {
                 throw new RuntimeException(exception);
             }
-            return 0;
         });
     }
 
     @Override
-    public AsyncAction<Integer> update(E entity) {
-        plugin.getLogger().info(Query.update(entity.getEntityType(), pluginName));
+    public AsyncAction<Long> update(E entity) {
         return AsyncAction.supplyAsync(plugin, () -> {
             try (Connection connection = databaseService.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.update(entity.getEntityType(), pluginName))) {
-                    int id = setStatement(statement, entity);
-                    statement.setInt(id, entity.getId());
-                    statement.executeUpdate();
-                    if (statement.executeUpdate() > 0) {
-                        ResultSet result = statement.getGeneratedKeys();
-                        if (result.next()) return result.getInt(1);
+                String query = Query.update(entity.getEntityType(), pluginName);
+                try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                    int index = setStatement(statement, entity);
+                    statement.setLong(index, entity.getId());
+                    int affectedRows = statement.executeUpdate();
+                    if (affectedRows == 0) {
+                        throw new SQLException("[Database] Updating record for " + entity.getEntityType().toTable() + " table failed, no rows affected.");
+                    }
+                    try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            return generatedKeys.getLong(1);
+                        } else {
+                            throw new SQLException("[Database] Creating user failed, no id obtained.");
+                        }
                     }
                 }
             } catch (SQLException exception) {
                 throw new RuntimeException(exception);
             }
-            return 0;
         });
     }
 
     @Override
-    public AsyncAction<Integer> delete(E entity) {
-        plugin.getLogger().info(Query.update(entity.getEntityType(), pluginName));
+    public AsyncAction<Boolean> delete(E entity) {
+        AtomicBoolean success = new AtomicBoolean(false);
         return AsyncAction.supplyAsync(plugin, () -> {
             try (Connection connection = databaseService.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement(Query.delete(entity.getEntityType(), pluginName))) {
-                    statement.setInt(1, entity.getId());
-                    statement.executeUpdate();
-                    if (statement.executeUpdate() > 0) {
-                        ResultSet result = statement.getGeneratedKeys();
-                        if (result.next()) return result.getInt(1);
+                String query = Query.delete(entity.getEntityType(), pluginName);
+                try (PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setLong(1, entity.getId());
+                    int affectedRows = statement.executeUpdate();
+                    if (affectedRows == 0) {
+                        throw new SQLException("[Database] Deleting record for " + entity.getEntityType().toTable() + " table failed, no rows affected.");
                     }
+                    success.set(true);
                 }
             } catch (SQLException exception) {
                 throw new RuntimeException(exception);
             }
-            return 0;
+            return success.get();
         });
     }
 
@@ -99,8 +132,8 @@ public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
             try (Connection connection = databaseService.getConnection()) {
                 try (PreparedStatement statement = connection.prepareStatement(Query.update(type, pluginName))) {
                     for (var value : collection) {
-                        int id = setStatement(statement, value);
-                        statement.setInt(id, value.getId());
+                        int index = setStatement(statement, value);
+                        statement.setLong(index, value.getId());
                         statement.addBatch();
                     }
                     statement.executeBatch();
@@ -112,9 +145,9 @@ public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
     }
 
     @Override
-    public void bulkImport(SqlEntityType type, Consumer<Map<Integer, E>> callback) {
+    public void bulkImport(SqlEntityType type, Consumer<Map<Long, E>> callback) {
         plugin.runAsync(() -> {
-            Map<Integer, E> map = new ConcurrentHashMap<>();
+            Map<Long, E> map = new ConcurrentHashMap<>();
             try (Connection connection = databaseService.getConnection()) {
                 var query = Query.selectEmpty(type, pluginName);
                 try (Statement statement = connection.createStatement()) {
@@ -123,6 +156,7 @@ public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
                         E element = fromResult(result);
                         map.put(element.getId(), element);
                     }
+                    result.close();
                     Bukkit.getScheduler().runTask(this.plugin, () -> callback.accept(map));
                 }
             } catch (SQLException e) {
@@ -132,12 +166,12 @@ public abstract class AbstractDao<E extends SqlEntity> implements Dao<E> {
     }
 
     @Override
-    public void bulkDelete(SqlEntityType type, Set<Integer> collection) {
+    public void bulkDelete(SqlEntityType type, Set<Long> collection) {
         plugin.runAndWait(() -> {
             try (Connection connection = databaseService.getConnection()) {
                 try (PreparedStatement statement = connection.prepareStatement(Query.delete(type, pluginName))) {
                     for (var value : collection) {
-                        statement.setInt(1, value);
+                        statement.setLong(1, value);
                         statement.addBatch();
                     }
                     statement.executeBatch();

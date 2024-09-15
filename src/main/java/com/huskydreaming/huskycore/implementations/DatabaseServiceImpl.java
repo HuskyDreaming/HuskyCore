@@ -1,5 +1,6 @@
 package com.huskydreaming.huskycore.implementations;
 
+import com.google.common.reflect.TypeToken;
 import com.huskydreaming.huskycore.HuskyPlugin;
 import com.huskydreaming.huskycore.connectors.MariaDBConnector;
 import com.huskydreaming.huskycore.connectors.MySQLConnector;
@@ -11,6 +12,7 @@ import com.huskydreaming.huskycore.interfaces.database.base.DatabaseService;
 import com.huskydreaming.huskycore.storage.Json;
 import org.bukkit.Bukkit;
 
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.util.concurrent.CompletableFuture;
@@ -26,7 +28,8 @@ public class DatabaseServiceImpl implements DatabaseService {
     public DatabaseServiceImpl(HuskyPlugin plugin) {
         this.plugin = plugin;
 
-        DatabaseConfig databaseConfig = Json.read(plugin, "database", DatabaseConfig.class);
+        Type type = new TypeToken<DatabaseConfig>(){}.getType();
+        DatabaseConfig databaseConfig = Json.read(plugin, "database", type);
         DatabaseType databaseType = databaseConfig != null ? databaseConfig.type() : DatabaseType.SQLITE;
 
         if(databaseConfig == null) {

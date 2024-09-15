@@ -61,11 +61,11 @@ public class Json {
         try {
             if (!Files.exists(parentPath)) {
                 Files.createDirectories(parentPath);
-                plugin.getLogger().info("Created new directory: " + parentPath.getFileName());
+                plugin.getLogger().info("[Storage] Created new directory: " + parentPath.getFileName());
             }
             if (!Files.exists(path)) {
                 Files.createFile(path);
-                plugin.getLogger().info("Created new file: " + path.getFileName());
+                plugin.getLogger().info("[Storage] Created new file: " + path.getFileName());
             }
         } catch (IOException e) {
             plugin.getLogger().severe(e.getMessage());
