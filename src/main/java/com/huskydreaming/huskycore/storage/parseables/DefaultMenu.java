@@ -1,7 +1,7 @@
 package com.huskydreaming.huskycore.storage.parseables;
 
 import com.google.common.base.Functions;
-import com.huskydreaming.huskycore.interfaces.Parseable;
+import com.huskydreaming.huskycore.utilities.general.Parseable;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNull;

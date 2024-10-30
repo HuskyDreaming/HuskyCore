@@ -4,11 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
-import com.huskydreaming.huskycore.data.ChunkData;
-import com.huskydreaming.huskycore.enumeration.Extension;
-import com.huskydreaming.huskycore.serializers.ChunkSerializer;
-import com.huskydreaming.huskycore.serializers.LocationSerializer;
-import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 
 import java.io.BufferedReader;
@@ -23,11 +18,7 @@ import java.nio.file.Paths;
 
 public class Json {
 
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(Location.class, new LocationSerializer())
-            .registerTypeAdapter(ChunkData.class, new ChunkSerializer())
-            .setPrettyPrinting()
-            .create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static void write(Plugin plugin, String fileName, Object object) {
         Path path = create(plugin, fileName, Extension.JSON);

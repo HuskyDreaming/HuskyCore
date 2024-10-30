@@ -1,7 +1,7 @@
 package com.huskydreaming.huskycore.inventories;
 
 import com.huskydreaming.huskycore.storage.parseables.DefaultMenu;
-import com.huskydreaming.huskycore.utilities.ItemBuilder;
+import com.huskydreaming.huskycore.utilities.builders.ItemBuilder;
 import fr.minuskube.inv.ClickableItem;
 import fr.minuskube.inv.SmartInventory;
 import fr.minuskube.inv.content.InventoryContents;

@@ -1,17 +1,14 @@
 package com.huskydreaming.huskycore.utilities;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.BlockFace;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.List;
 
-// TODO: Needs to be improved
 public class Util {
 
     private static final Pattern pattern = Pattern.compile("-?\\d+(\\.\\d+)?");
@@ -23,6 +20,25 @@ public class Util {
             BlockFace.SOUTH,
             BlockFace.WEST
     };
+
+    public static String hex(String message) {
+        Pattern pattern = Pattern.compile("#[a-fA-F0-9]{6}");
+        Matcher matcher = pattern.matcher(message);
+        while (matcher.find()) {
+            String hexCode = message.substring(matcher.start(), matcher.end());
+            String replaceSharp = hexCode.replace('#', 'x');
+
+            char[] ch = replaceSharp.toCharArray();
+            StringBuilder builder = new StringBuilder();
+            for (char c : ch) {
+                builder.append("&").append(c);
+            }
+
+            message = message.replace(hexCode, builder.toString());
+            matcher = pattern.matcher(message);
+        }
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
 
     public static boolean isNumeric(String string) {
         return pattern.matcher(string).matches();

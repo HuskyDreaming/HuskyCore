@@ -1,10 +1,14 @@
 package com.huskydreaming.huskycore;
 
-import com.huskydreaming.huskycore.implementations.DefaultServiceImpl;
-import com.huskydreaming.huskycore.interfaces.DefaultService;
-import com.huskydreaming.huskycore.registries.CommandRegistry;
-import com.huskydreaming.huskycore.registries.ServiceRegistry;
-import com.huskydreaming.huskycore.utilities.ThreadSync;
+import com.huskydreaming.huskycore.handlers.implementations.CommandHandlerImpl;
+import com.huskydreaming.huskycore.handlers.interfaces.CommandHandler;
+import com.huskydreaming.huskycore.handlers.interfaces.Handler;
+import com.huskydreaming.huskycore.registries.Registrable;
+import com.huskydreaming.huskycore.registries.Registry;
+import com.huskydreaming.huskycore.registries.RegistryImpl;
+import com.huskydreaming.huskycore.repositories.Repository;
+import com.huskydreaming.huskycore.services.Service;
+import com.huskydreaming.huskycore.utilities.async.ThreadSync;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -15,16 +19,35 @@ import java.util.concurrent.Executors;
 
 public abstract class HuskyPlugin extends JavaPlugin {
 
-    protected CommandRegistry commandRegistry;
-    protected ServiceRegistry serviceRegistry;
-
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+    protected Registry<Service> serviceRegistry;
+    protected Registry<Handler> handlerRegistry;
+    protected Registry<Repository> repositoryRegistry;
+
+    public abstract void onInitialize();
+    public abstract void onPostInitialize();
+    public abstract void onFinalize();
+
+    @Override
+    public void onLoad() {
+        handlerRegistry = new RegistryImpl<>();
+        handlerRegistry.register(CommandHandler.class, new CommandHandlerImpl());
+
+        repositoryRegistry = new RegistryImpl<>();
+        serviceRegistry = new RegistryImpl<>();
+
+        onInitialize();
+    }
 
     @Override
     public void onEnable() {
-        commandRegistry = new CommandRegistry();
-        serviceRegistry = new ServiceRegistry();
-        serviceRegistry.register(DefaultService.class, new DefaultServiceImpl());
+        onPostInitialize();
+    }
+
+    @Override
+    public void onDisable() {
+        onFinalize();
     }
 
     protected void registerListeners(Listener... listeners) {
@@ -32,12 +55,18 @@ public abstract class HuskyPlugin extends JavaPlugin {
         Arrays.asList(listeners).forEach(listener -> pluginManager.registerEvents(listener, this));
     }
 
-    public <T> T provide(Class<T> tClass) {
-        return serviceRegistry.provide(tClass);
-    }
+    public <K extends Registrable> K provide(Class<K> c) {
+        if(Service.class.isAssignableFrom(c)) {
+            return serviceRegistry.provide(c);
+        }
 
-    public CommandRegistry getCommandRegistry() {
-        return commandRegistry;
+        if(Handler.class.isAssignableFrom(c)) {
+            return handlerRegistry.provide(c);
+        }
+
+        getLogger().severe("[Registry] Could not retrieve " + c.getSimpleName() + " as it is not available");
+
+        return null;
     }
 
     public void runAsync(Runnable runnable) {
