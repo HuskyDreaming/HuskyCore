@@ -13,3 +13,4 @@
 Projects using this core:
 - [Settlements](https://github.com/HuskyDreaming/Settlements)
 - [Bouncy Balls](https://github.com/HuskyDreaming/BouncyBalls)
+- [Medieval Brewery](https://github.com/HuskyDreaming/MedievalBrewery)
