@@ -13,18 +13,33 @@ import java.util.Map;
 public class RegistryImpl<T extends Registrable> implements Registry<T> {
 
     private final Map<Class<?>, T> registries = new LinkedHashMap<>();
-    private final static String PREFIX = "[Registry]";
 
     @Override
-    public void post(HuskyPlugin plugin) {
+    public void start(HuskyPlugin plugin, RegistryType registryType) {
         synchronized(registries) {
             try {
                 registries.values().forEach(r -> {
-                    if(r instanceof Handler handler) {
-                        handler.postInitialize(plugin);
+                    switch (registryType) {
+                        case POST -> {
+                            if (r instanceof Service service) {
+                                service.postLoad(plugin);
+                            } else if (r instanceof Repository repository) {
+                                repository.postDeserialize(plugin);
+                            } else if (r instanceof Handler handler) {
+                                handler.postInitialize(plugin);
+                            }
+                        }
+                        case STARTUP -> {
+                            if (r instanceof Service service) {
+                                service.load(plugin);
+                            } else if (r instanceof Repository repository) {
+                                repository.deserialize(plugin);
+                            } else if (r instanceof Handler handler) {
+                                handler.initialize(plugin);
+                            }
+                        }
                     }
                 });
-                plugin.getLogger().info(PREFIX + " Successfully ran post startup for registries");
             } catch (Exception exception) {
                 throw new RuntimeException(exception);
             }
@@ -32,49 +47,20 @@ public class RegistryImpl<T extends Registrable> implements Registry<T> {
     }
 
     @Override
-    public void start(HuskyPlugin plugin) {
+    public void shutdown(HuskyPlugin plugin) {
         synchronized(registries) {
             try {
                 ListIterator<T> iterator = new ArrayList<>(registries.values()).listIterator(registries.size());
                 while (iterator.hasPrevious()) {
-                    if(iterator.previous() instanceof Service service) {
-                        service.load(plugin);
-                    }
-
-                    if(iterator.previous() instanceof Repository repository) {
-                        repository.serialize(plugin);
-                    }
-
-                    if(iterator.previous() instanceof Handler handler) {
-                        handler.initialize(plugin);
-                    }
-                }
-                plugin.getLogger().info(PREFIX + " Successfully started all registries");
-            } catch (Exception exception) {
-                throw new RuntimeException(exception);
-            }
-        }
-    }
-
-    @Override
-    public void stop(HuskyPlugin plugin) {
-        synchronized(registries) {
-            try {
-                ListIterator<T> iterator = new ArrayList<>(registries.values()).listIterator(registries.size());
-                while (iterator.hasPrevious()) {
-                    if(iterator.previous() instanceof Service service) {
+                    T type = iterator.previous();
+                    if(type instanceof Service service) {
                         service.unload(plugin);
-                    }
-
-                    if(iterator.previous() instanceof Repository repository) {
-                        repository.deserialize(plugin);
-                    }
-
-                    if(iterator.previous() instanceof Handler handler) {
+                    } else if(type instanceof Repository repository) {
+                        repository.serialize(plugin);
+                    } else if(type instanceof Handler handler) {
                         handler.finalize(plugin);
                     }
                 }
-                plugin.getLogger().info(PREFIX + " Successfully stopped all registries");
             } catch (Exception exception) {
                 throw new RuntimeException(exception);
             }

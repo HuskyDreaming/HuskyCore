@@ -9,6 +9,10 @@ public interface Service extends Registrable {
 
     }
 
+    default void postLoad(HuskyPlugin plugin) {
+
+    }
+
     default void unload(HuskyPlugin plugin) {
 
     }

@@ -6,6 +6,7 @@ import com.huskydreaming.huskycore.handlers.interfaces.Handler;
 import com.huskydreaming.huskycore.registries.Registrable;
 import com.huskydreaming.huskycore.registries.Registry;
 import com.huskydreaming.huskycore.registries.RegistryImpl;
+import com.huskydreaming.huskycore.registries.RegistryType;
 import com.huskydreaming.huskycore.repositories.Repository;
 import com.huskydreaming.huskycore.services.Service;
 import com.huskydreaming.huskycore.utilities.async.ThreadSync;
@@ -27,7 +28,6 @@ public abstract class HuskyPlugin extends JavaPlugin {
 
     public abstract void onInitialize();
     public abstract void onPostInitialize();
-    public abstract void onFinalize();
 
     @Override
     public void onLoad() {
@@ -38,16 +38,29 @@ public abstract class HuskyPlugin extends JavaPlugin {
         serviceRegistry = new RegistryImpl<>();
 
         onInitialize();
+
+        repositoryRegistry.start(this, RegistryType.STARTUP);
+        handlerRegistry.start(this, RegistryType.STARTUP);
+        serviceRegistry.start(this, RegistryType.STARTUP);
+        getLogger().severe("[Registry] Successfully started all registries");
     }
 
     @Override
     public void onEnable() {
         onPostInitialize();
+
+        repositoryRegistry.start(this, RegistryType.POST);
+        handlerRegistry.start(this, RegistryType.POST);
+        serviceRegistry.start(this, RegistryType.POST);
+        getLogger().severe("[Registry] Successfully ran post startup for all registries");
     }
 
     @Override
     public void onDisable() {
-        onFinalize();
+        handlerRegistry.shutdown(this);
+        serviceRegistry.shutdown(this);
+        repositoryRegistry.shutdown(this);
+        getLogger().severe("[Registry] Successfully shutdown all registries");
     }
 
     protected void registerListeners(Listener... listeners) {
@@ -58,10 +71,10 @@ public abstract class HuskyPlugin extends JavaPlugin {
     public <K extends Registrable> K provide(Class<K> c) {
         if(Service.class.isAssignableFrom(c)) {
             return serviceRegistry.provide(c);
-        }
-
-        if(Handler.class.isAssignableFrom(c)) {
+        } else if(Handler.class.isAssignableFrom(c)) {
             return handlerRegistry.provide(c);
+        } else if(Repository.class.isAssignableFrom(c)) {
+            return repositoryRegistry.provide(c);
         }
 
         getLogger().severe("[Registry] Could not retrieve " + c.getSimpleName() + " as it is not available");

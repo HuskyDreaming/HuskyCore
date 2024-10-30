@@ -16,7 +16,7 @@ public class CommandHandlerImpl implements CommandHandler {
     private final Set<Command> commands = new HashSet<>();
 
     @Override
-    public void initialize(HuskyPlugin plugin) {
+    public void postInitialize(HuskyPlugin plugin) {
         PluginCommand pluginCommand = plugin.getCommand(abstractCommand.getLabel());
         if(pluginCommand != null) pluginCommand.setExecutor(abstractCommand);
     }

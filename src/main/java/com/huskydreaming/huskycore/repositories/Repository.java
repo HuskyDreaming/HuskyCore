@@ -9,6 +9,10 @@ public interface Repository extends Registrable {
 
     }
 
+    default void postDeserialize(HuskyPlugin plugin) {
+
+    }
+
     default void serialize(HuskyPlugin plugin) {
 
     }
