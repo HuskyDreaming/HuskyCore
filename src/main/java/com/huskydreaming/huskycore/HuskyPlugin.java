@@ -42,7 +42,7 @@ public abstract class HuskyPlugin extends JavaPlugin {
         repositoryRegistry.start(this, RegistryType.STARTUP);
         handlerRegistry.start(this, RegistryType.STARTUP);
         serviceRegistry.start(this, RegistryType.STARTUP);
-        getLogger().severe("[Registry] Successfully started all registries");
+        getLogger().info("[Registry] Successfully started all registries");
     }
 
     @Override
@@ -52,7 +52,7 @@ public abstract class HuskyPlugin extends JavaPlugin {
         repositoryRegistry.start(this, RegistryType.POST);
         handlerRegistry.start(this, RegistryType.POST);
         serviceRegistry.start(this, RegistryType.POST);
-        getLogger().severe("[Registry] Successfully ran post startup for all registries");
+        getLogger().info("[Registry] Successfully ran post startup for all registries");
     }
 
     @Override
@@ -60,7 +60,7 @@ public abstract class HuskyPlugin extends JavaPlugin {
         handlerRegistry.shutdown(this);
         serviceRegistry.shutdown(this);
         repositoryRegistry.shutdown(this);
-        getLogger().severe("[Registry] Successfully shutdown all registries");
+        getLogger().info("[Registry] Successfully shutdown all registries");
     }
 
     protected void registerListeners(Listener... listeners) {

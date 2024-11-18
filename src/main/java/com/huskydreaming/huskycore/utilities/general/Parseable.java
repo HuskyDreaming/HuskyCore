@@ -1,9 +1,9 @@
 package com.huskydreaming.huskycore.utilities.general;
 
-import com.huskydreaming.huskycore.utilities.Util;
+import com.huskydreaming.huskycore.utilities.ChatUtil;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public interface Parseable {
 
@@ -17,7 +17,7 @@ public interface Parseable {
         String string = parse();
         for (int i = 0; i < objects.length; i++) {
             String parameter = (objects[i] instanceof String stringObject) ? stringObject : String.valueOf(objects[i]);
-            string = string.replace("<" + i + ">", Util.capitalize(parameter.replace("_", " ")));
+            string = string.replace("<" + i + ">", ChatUtil.capitalize(parameter.replace("_", " ")));
         }
 
         return string;
