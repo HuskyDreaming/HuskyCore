@@ -18,6 +18,7 @@ public interface Parseable {
         for (int i = 0; i < objects.length; i++) {
             String parameter = (objects[i] instanceof String stringObject) ? stringObject : String.valueOf(objects[i]);
             string = string.replace("<" + i + ">", ChatUtil.capitalize(parameter.replace("_", " ")));
+            string = ChatUtil.hex(string);
         }
 
         return string;
@@ -28,6 +29,7 @@ public interface Parseable {
         for (String string : parseList()) {
             for (int i = 0; i < objects.length; i++) {
                 string = string.replace("<" + i + ">", String.valueOf(objects[i]));
+                string = ChatUtil.hex(string);
             }
             parameterList.add(string);
         }
