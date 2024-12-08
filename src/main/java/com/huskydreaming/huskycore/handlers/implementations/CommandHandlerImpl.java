@@ -17,6 +17,7 @@ public class CommandHandlerImpl implements CommandHandler {
 
     @Override
     public void postInitialize(HuskyPlugin plugin) {
+        if(abstractCommand == null) return;
         PluginCommand pluginCommand = plugin.getCommand(abstractCommand.getLabel());
         if(pluginCommand != null) pluginCommand.setExecutor(abstractCommand);
     }
