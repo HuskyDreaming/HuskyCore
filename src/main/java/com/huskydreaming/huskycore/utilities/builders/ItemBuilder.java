@@ -77,13 +77,12 @@ public class ItemBuilder {
         ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta skullMeta = (SkullMeta) itemStack.getItemMeta();
         if (skullMeta != null) {
-            if (enchanted) skullMeta.addEnchant(Enchantment.DURABILITY, 1, true);
+            if (enchanted) skullMeta.addEnchant(Enchantment.UNBREAKING, 1, true);
             skullMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
             skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             skullMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
             skullMeta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
             skullMeta.addItemFlags(ItemFlag.HIDE_DYE);
-            skullMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
             skullMeta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
             skullMeta.setDisplayName(displayName);
             skullMeta.setOwnerProfile(offlinePlayer.getPlayerProfile());
@@ -97,13 +96,12 @@ public class ItemBuilder {
         ItemStack itemStack = new ItemStack(material);
         ItemMeta itemMeta = itemStack.getItemMeta();
         if (itemMeta != null) {
-            if (enchanted) itemMeta.addEnchant(Enchantment.DURABILITY, 1, true);
+            if (enchanted) itemMeta.addEnchant(Enchantment.UNBREAKING, 1, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             itemMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
             itemMeta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
             itemMeta.addItemFlags(ItemFlag.HIDE_DYE);
-            itemMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
             itemMeta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
             itemMeta.setDisplayName(displayName);
             if (lore != null) itemMeta.setLore(lore);
@@ -118,7 +116,6 @@ public class ItemBuilder {
         PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
         if (potionMeta != null) {
             potionMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-            potionMeta.addItemFlags(ItemFlag.HIDE_POTION_EFFECTS);
             potionMeta.setDisplayName(displayName);
             if(potionColor != null) potionMeta.setColor(potionColor);
             if (lore != null) potionMeta.setLore(lore);

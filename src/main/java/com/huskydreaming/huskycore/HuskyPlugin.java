@@ -69,11 +69,11 @@ public abstract class HuskyPlugin extends JavaPlugin {
     }
 
     public <K extends Registrable> K provide(Class<K> c) {
-        if(Service.class.isAssignableFrom(c)) {
+        if (Service.class.isAssignableFrom(c)) {
             return serviceRegistry.provide(c);
-        } else if(Handler.class.isAssignableFrom(c)) {
+        } else if (Handler.class.isAssignableFrom(c)) {
             return handlerRegistry.provide(c);
-        } else if(Repository.class.isAssignableFrom(c)) {
+        } else if (Repository.class.isAssignableFrom(c)) {
             return repositoryRegistry.provide(c);
         }
 
