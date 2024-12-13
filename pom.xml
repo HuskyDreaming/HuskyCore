@@ -6,7 +6,7 @@
 
     <groupId>com.huskydreaming</groupId>
     <artifactId>huskycore</artifactId>
-    <version>1.7.6-SNAPSHOT</version>
+    <version>1.7.7-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

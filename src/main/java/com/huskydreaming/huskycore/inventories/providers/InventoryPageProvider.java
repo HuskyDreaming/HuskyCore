@@ -14,22 +14,10 @@ import java.util.function.Consumer;
 
 public abstract class InventoryPageProvider<E> implements InventoryProvider {
 
-    protected final String title;
-    protected final int rows;
+    protected int rows;
 
     protected boolean updates;
     protected E[] array;
-
-    public InventoryPageProvider(String title, int rows) {
-        this.title = title;
-        this.rows = rows;
-    }
-
-    public InventoryPageProvider(String title, int rows, E[] array) {
-        this.title = title;
-        this.rows = rows;
-        this.array = array;
-    }
 
     @Override
     public void init(Player player, InventoryContents contents) {
@@ -56,6 +44,10 @@ public abstract class InventoryPageProvider<E> implements InventoryProvider {
 
     public void setArray(E[] array) {
         this.array = array;
+    }
+
+    public void setRows(int rows) {
+        this.rows = rows;
     }
 
     private void setupPagination(Player player, InventoryContents contents) {

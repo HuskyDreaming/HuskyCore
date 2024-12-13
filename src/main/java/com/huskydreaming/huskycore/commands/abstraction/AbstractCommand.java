@@ -35,7 +35,7 @@ public abstract class AbstractCommand implements CommandExecutor, Command, TabCo
                 return true;
             }
 
-            if (!(commandSender.hasPermission(getLabel() + "." + subCommand.getLabel()) && commandSender.isOp())) {
+            if (!(commandSender.hasPermission(getLabel() + "." + subCommand.getLabel()) || commandSender.isOp())) {
                 commandSender.sendMessage(getPermission().prefix());
                 return true;
             }
