@@ -17,11 +17,12 @@ public abstract class InventoryPageProvider<E> implements InventoryProvider {
     protected int rows;
 
     protected boolean updates;
+    protected boolean borders;
     protected E[] array;
 
     @Override
     public void init(Player player, InventoryContents contents) {
-        contents.fillBorders(InventoryItem.border());
+        if(borders) contents.fillBorders(InventoryItem.border());
 
         setupItems(player, contents);
         setupPagination(player, contents);
@@ -52,20 +53,21 @@ public abstract class InventoryPageProvider<E> implements InventoryProvider {
 
     private void setupPagination(Player player, InventoryContents contents) {
         Pagination pagination = contents.pagination();
-        pagination.setItemsPerPage(Math.min(rows * 9, 3 * 9));
+        int maxRows = borders ? Math.min(rows * 9, 3 * 9) : rows * 9;
+        pagination.setItemsPerPage(maxRows);
         pagination.addToIterator(contents.newIterator(SlotIterator.Type.HORIZONTAL, 1, 0));
 
         if (!pagination.isLast() && !pagination.isFirst()) {
-            contents.set(4, 1, InventoryItem.previous(player, contents));
-            contents.set(4, 7, InventoryItem.next(player, contents));
+            contents.set(maxRows + 1, 1, InventoryItem.previous(player, contents));
+            contents.set(maxRows + 1, 7, InventoryItem.next(player, contents));
         }
 
         if (!pagination.isLast()) {
-            contents.set(4, 7, InventoryItem.next(player, contents));
+            contents.set(maxRows + 1, 7, InventoryItem.next(player, contents));
         }
 
         if (!pagination.isFirst()) {
-            contents.set(4, 1, InventoryItem.previous(player, contents));
+            contents.set(maxRows + 1, 1, InventoryItem.previous(player, contents));
         }
 
         setupItems(player, contents);
