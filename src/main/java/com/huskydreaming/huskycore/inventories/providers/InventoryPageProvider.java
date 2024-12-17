@@ -55,7 +55,7 @@ public abstract class InventoryPageProvider<E> implements InventoryProvider {
         Pagination pagination = contents.pagination();
         int maxRows = borders ? Math.min(rows * 9, 3 * 9) : rows * 9;
         pagination.setItemsPerPage(maxRows);
-        pagination.addToIterator(contents.newIterator(SlotIterator.Type.HORIZONTAL, 1, 0));
+        pagination.addToIterator(contents.newIterator(SlotIterator.Type.HORIZONTAL, borders ? 1 : 0, 0));
 
         if (!pagination.isLast() && !pagination.isFirst()) {
             contents.set(maxRows + 1, 1, InventoryItem.previous(player, contents));
